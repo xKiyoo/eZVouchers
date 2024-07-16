@@ -1,0 +1,38 @@
+options:
+    prefix: &8| &cYourPrefix &8»
+    store: YourStore.tebex.io
+
+on right click with enchanted book:
+    set {_t::*} to nbt tags of nbt compound of player's held item
+    {_t::*} contains "Voucher"
+    set {-rank.confirm::%player's uuid%} to 1
+    send "{@prefix} &7Please type &cconfirm &7in the chat to redeem your rank" to player
+
+command /createvoucher <text> <integer>:
+    usage: &8| &c&lERROR &8» &7Usage: &c/createvoucher &8<&crank&8> &8<&cnumber &7= &bdays duration&8>
+    permission: op
+    trigger:
+        set {_i} to enchanted book
+        set string tag "Voucher;Rank" of nbt of {_i} to arg-1
+        set int tag "Voucher;Duration" of nbt of {_i} to arg-2
+
+        set name of {_i} to "&8» &b&lRank Voucher &8[&7%string tag "Voucher;Rank" of nbt of {_i} in uppercase% %int tag "Voucher;Duration" of nbt of {_i}%d&8]"
+        set lore of {_i} to "&7%font("RIGHT CLICK TO REDEEM")%", "", "&7You can buy &bpermanent", "&7ranks on our &bstore!", "", "&7&o{@store}"
+
+        give player 1 of {_i}
+        send "{@prefix} &7Created &b%string tag "Voucher;Rank" of nbt of {_i} in uppercase% &7voucher that lasts for &b%arg-2% days"
+
+on chat:
+    {-rank.confirm::%player's uuid%} = 1
+    cancel event
+    if string tag "Voucher;Rank" of nbt of player's held item is set:
+        set {_st} to string tag "Voucher;Rank" of nbt of player's held item
+        set {_it} to int tag "Voucher;Duration" of nbt of player's held item
+
+        remove 1 of player's tool from player's inventory
+        console command "lp user %player% parent addtemp %{_st}% %{_it}%d"
+        send "{@prefix} &7You've redeemed &b%{_st} in uppercase% &7for &b%{_it}%d" to player
+        delete {-rank.confirm::%player's uuid%}
+        stop
+    send "&8| &c&lERROR &8» &7You don't hold a valid voucher in your hand."
+    delete {-rank.confirm::%player's uuid%}
